@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from logging.handlers import SocketHandler
 from twisted.internet import reactor
-import requests
+import treq
 
 from opencanary.iphelper import check_ip
 
