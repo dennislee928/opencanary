@@ -32,8 +32,11 @@ class CanaryRequest(Request):
         Request.process(self)
 
 
-class CanaryHttpServiceSite(Site):
+from twisted.protocols.policies import LimitTotalConnectionsFactory
+
+class CanaryHttpServiceSite(Site, LimitTotalConnectionsFactory):
     requestFactory = CanaryRequest
+    connectionLimit = 100
 
 
 class CanaryHTTPChannel(HTTPChannel):
@@ -329,21 +332,5 @@ class CanaryHTTP(CanaryService):
         root.putChild(b"index.html", page)
         wrapped = EncodingResourceWrapper(root, [GzipEncoderFactory()])
         site = CanaryHttpServiceSite(wrapped)
-        from twisted.protocols.policies import LimitTotalConnectionsFactory
-        site.connectionLimit = 100
-        limited_site = LimitTotalConnectionsFactory(100)
-        limited_site.protocol = site.protocol
-        limited_site.buildProtocol = site.buildProtocol
-        # Better: just wrap it
-        limited_site = LimitTotalConnectionsFactory(100)
-        limited_site.wrappedFactory = site
-        # Since twisted's LimitTotalConnectionsFactory delegates...
-        # Wait, no, LimitTotalConnectionsFactory takes connection count and acts as a mixin/wrapper.
-        # But wait, it's easier to just do:
-        site = LimitTotalConnectionsFactory(100)
-        site.wrappedFactory = CanaryHttpServiceSite(wrapped)
-        site.protocol = site.wrappedFactory.protocol
-        # Actually, LimitTotalConnectionsFactory is usually initialized differently? Wait, twisted 
-        # Wait, the best way to wrap it:
-        # site = LimitTotalConnectionsFactory(100) ... No, ThrottlingFactory or LimitTotalConnectionsFactory.
+        return internet.TCPServer(self.port, site, interface=self.listen_addr)
 
