@@ -267,12 +267,19 @@ class SlackHandler(logging.Handler):
 
     def emit(self, record):
         data = self.generate_msg(record)
-        response = requests.post(self.webhook_url, json=data)
-        if response.status_code != 200:
-            print(
-                "Error %s sending Slack message, the response was:\n%s"
-                % (response.status_code, response.text)
-            )
+        d = treq.post(self.webhook_url, json=data)
+
+        def _cb(response):
+            if response.code != 200:
+                treq.text_content(response).addCallback(
+                    lambda text: print("Error %s sending Slack message, the response was:\n%s" % (response.code, text))
+                )
+
+        def _eb(failure):
+            print("Error sending Slack message:", failure.getErrorMessage())
+
+        d.addCallback(_cb)
+        d.addErrback(_eb)
 
 
 class TeamsHandler(logging.Handler):
