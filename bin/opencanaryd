@@ -56,7 +56,7 @@ elif [ "${cmd}" == "--dev" ]; then
     warn_drop_privileges
     sudo -E "${DIR}/twistd" -noy "${DIR}/opencanary.tac" --pidfile "${PIDFILE}" ${TWISTD_UID_FLAG:-} ${TWISTD_GID_FLAG:-}
 elif [ "${cmd}" == "--usermodule" ]; then
-  usermodconf=$(python3 -c "import os; print(os.path.join(os.path.dirname(os.import_module('opencanary').__file__), 'data/settings-usermodule.json'))")
+  usermodconf=$(python3 -c "import os, importlib; print(os.path.join(os.path.dirname(importlib.import_module('opencanary').__file__), 'data/settings-usermodule.json'))")
 
   if [ -f opencanary.conf ]; then
     if ! diff -q opencanary.conf "${usermodconf}" 2>&1 >/dev/null; then
