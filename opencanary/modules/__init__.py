@@ -100,7 +100,32 @@ class CanaryService(object):
         this if more intricracy is needed.
         """
         if isinstance(self, Factory):
-            return internet.TCPServer(self.port, self)
+            # Wrap the factory with LimitTotalConnectionsFactory to prevent resource exhaustion
+            from twisted.protocols.policies import LimitTotalConnectionsFactory
+            class LimitedFactory(LimitTotalConnectionsFactory):
+                connectionLimit = self.config.getVal("device.max_connections", 100)
+                def __init__(self, wrapped):
+                    self.wrapped = wrapped
+                    self.connectionCount = 0
+                def buildProtocol(self, addr):
+                    if self.connectionCount >= self.connectionLimit:
+                        return None
+                    p = self.wrapped.buildProtocol(addr)
+                    if p is None: return None
+                    p = LimitTotalConnectionsProtocol(p, self)
+                    return p
+            
+            from twisted.protocols.policies import ProtocolWrapper
+            class LimitTotalConnectionsProtocol(ProtocolWrapper):
+                def makeConnection(self, transport):
+                    self.factory.connectionCount += 1
+                    ProtocolWrapper.makeConnection(self, transport)
+                def connectionLost(self, reason):
+                    self.factory.connectionCount -= 1
+                    ProtocolWrapper.connectionLost(self, reason)
+                    
+            limited_factory = LimitedFactory(self)
+            return internet.TCPServer(self.port, limited_factory)
         elif isinstance(self, DatagramProtocol):
             return internet.UDPServer(self.port, self)
 
