@@ -57,7 +57,8 @@ class Config:
                 with open(fname, "r") as f:
                     print("[-] Using config file: %s" % fname)
                     self.__config = json.load(f)
-                    self.__config = expand_vars(self.__config)
+                    if self.__config.get("config.expand_env_vars", False):
+                        self.__config = expand_vars(self.__config)
                 if fname is configfile:
                     print(
                         "[-] Warning, making use of the configuration file in the immediate directory is not recommended! Suggested locations: %s"

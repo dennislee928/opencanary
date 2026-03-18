@@ -245,8 +245,8 @@ class HpfeedsHandler(logging.Handler):
         try:
             msg = self.format(record)
             self.hpc.publish(self.channels, msg)
-        except:  # noqa: E722
-            print("Error on publishing to server")
+        except Exception as e:
+            print("Error on publishing to server: %s" % e)
 
 
 class SlackHandler(logging.Handler):
@@ -352,12 +352,19 @@ class TeamsHandler(logging.Handler):
         data = json.loads(record.msg)
         payload = self.message(data)
         headers = {"Content-Type": "application/json"}
-        response = requests.post(self.webhook_url, headers=headers, json=payload)
-        if response.status_code != 202:
-            print(
-                "Error %s sending Teams message, the response was:\n%s"
-                % (response.status_code, response.text)
-            )
+        d = treq.post(self.webhook_url, headers=headers, json=payload)
+
+        def _cb(response):
+            if response.code != 202:
+                treq.text_content(response).addCallback(
+                    lambda text: print("Error %s sending Teams message, the response was:\n%s" % (response.code, text))
+                )
+
+        def _eb(failure):
+            print("Error sending Teams message:", failure.getErrorMessage())
+
+        d.addCallback(_cb)
+        d.addErrback(_eb)
 
 
 def map_string(data, mapping):
@@ -411,16 +418,22 @@ class WebhookHandler(logging.Handler):
             data = map_string(deepcopy(data), mapping)
 
         if "application/json" in self.kwargs.get("headers", {}).values():
-            response = requests.request(
+            d = treq.request(
                 method=self.method, url=self.url, json=data, **self.kwargs
             )
         else:
-            response = requests.request(
+            d = treq.request(
                 method=self.method, url=self.url, data=data, **self.kwargs
             )
 
-        if response.status_code != self.status_code:
-            print(
-                "Error %s sending Requests payload, the response was:\n%s"
-                % (response.status_code, response.text)
-            )
+        def _cb(response):
+            if response.code != self.status_code:
+                treq.text_content(response).addCallback(
+                    lambda text: print("Error %s sending Requests payload, the response was:\n%s" % (response.code, text))
+                )
+
+        def _eb(failure):
+            print("Error sending Requests payload:", failure.getErrorMessage())
+
+        d.addCallback(_cb)
+        d.addErrback(_eb)

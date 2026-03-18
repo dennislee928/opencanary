@@ -5,6 +5,7 @@ from pkg_resources import resource_filename
 from twisted.application import internet
 from twisted.internet.protocol import Factory
 from twisted.internet.protocol import DatagramProtocol
+from twisted.protocols.policies import LimitTotalConnectionsFactory
 
 from opencanary.honeycred import buildHoneyCredHook
 
