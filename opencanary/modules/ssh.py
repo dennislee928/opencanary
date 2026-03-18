@@ -1,5 +1,4 @@
 from opencanary.modules import CanaryService
-from pkg_resources import resource_filename
 
 import twisted
 import os
