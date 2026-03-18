@@ -5,10 +5,9 @@ import itertools
 import string
 import re
 from os.path import expanduser
-from pkg_resources import resource_filename
 from pathlib import Path
 
-SAMPLE_SETTINGS = resource_filename(__name__, "data/settings.json")
+SAMPLE_SETTINGS = os.path.join(os.path.dirname(__file__), "data/settings.json")
 SETTINGS = "opencanary.conf"
 
 
