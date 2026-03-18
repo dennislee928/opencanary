@@ -81,7 +81,7 @@ elif [ "${cmd}" == "--copyconfig" ]; then
         echo "A config file already exists at /etc/opencanaryd/opencanary.conf, please move it first"
         exit 1
     fi
-    defaultconf=$(python3 -c "from pkg_resources import resource_filename; print(resource_filename('opencanary', 'data/settings.json'))")
+    defaultconf=$(python3 -c "import os, importlib; print(os.path.join(os.path.dirname(importlib.import_module('opencanary').__file__), 'data/settings.json'))")
     sudo -E mkdir -p /etc/opencanaryd
     sudo -E cp "${defaultconf}" /etc/opencanaryd/opencanary.conf
     echo -e "[*] A sample config file is ready /etc/opencanaryd/opencanary.conf\n"
