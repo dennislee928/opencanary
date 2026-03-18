@@ -40,6 +40,7 @@ requirements = [
     "cryptography==46.0.4",
     "simplejson==3.16.0",
     "requests==2.32.4",
+    "treq==24.9.1",
     "zope.interface==7.2",
     "PyPDF2==1.27.9",
     "fpdf==1.7.2",
