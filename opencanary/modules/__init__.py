@@ -1,7 +1,6 @@
 import sys
 import warnings
 import os.path
-from pkg_resources import resource_filename
 from twisted.application import internet
 from twisted.internet.protocol import Factory
 from twisted.internet.protocol import DatagramProtocol
@@ -49,7 +48,11 @@ class CanaryService(object):
     def resource_dir(klass):
         """Read-Only module resource directory"""
         path = os.path.join("data", klass.NAME)
-        return resource_filename(__name__, path)
+        # return os.path.join(os.path.dirname(__file__), "..", path)
+        # actually CanaryService is in opencanary/modules, so the root is __file__/..
+        # Let's properly resolve this relative to opencanary
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base, path)
 
     @classmethod
     def resource_filename(klass, *args):
